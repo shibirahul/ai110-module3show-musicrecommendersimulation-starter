@@ -25,7 +25,21 @@ Song features used: genre, mood, energy, valence, danceability, acousticness, te
 
 UserProfile features: favorite_genre, favorite_mood, target_energy, likes_acoustic.
 
+Algorithm Recipe:
+- +2.0 points for genre match
+- +1.0 point for mood match
+- Energy similarity: 1 - abs(song_energy - user_energy) (ranges 0-1)
+- Total score = genre_points + mood_points + energy_similarity
+- Potential bias: May over-prioritize genre matches, ignoring great songs that match mood/energy.
+
+Data flow:
+1. Input: User preferences (genre, mood, energy)
+2. Process: Load songs from CSV, score each song using the recipe
+3. Output: Rank songs by score descending, return top K
+
 ---
+
+## Getting Started
 
 ## Getting Started
 
