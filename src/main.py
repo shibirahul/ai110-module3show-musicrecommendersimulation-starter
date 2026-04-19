@@ -13,7 +13,7 @@ from recommender import load_songs, recommend_songs
 
 
 def main() -> None:
-    songs = load_songs("data/songs.csv") 
+    songs = load_songs("../data/songs.csv") 
 
     # Starter example profile
     user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
@@ -22,12 +22,11 @@ def main() -> None:
 
     print("\nTop recommendations:\n")
     for rec in recommendations:
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
         song, score, explanation = rec
-        print(f"{song['title']} - Score: {score:.2f}")
-        print(f"Because: {explanation}")
-        print()
+        print(f"{song['title']} by {song['artist']}")
+        print(f"Score: {score:.2f}")
+        print(f"Reasons: {explanation}")
+        print("-" * 40)
 
 
 if __name__ == "__main__":
