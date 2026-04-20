@@ -1,9 +1,49 @@
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, TypedDict
 from dataclasses import dataclass
+
+class SongDict(TypedDict, total=False):
+    """Type definition for a song record from the dataset."""
+    id: int
+    title: str
+    artist: str
+    genre: str
+    mood: str
+    energy: float
+    tempo_bpm: float
+    valence: float
+    danceability: float
+    acousticness: float
+    popularity: int
+    decade: str
+    detailed_mood: str
+
+class UserPreferences(TypedDict, total=False):
+    """Type definition for user preference inputs."""
+    genre: str
+    mood: str
+    energy: float
+    likes_acoustic: bool
+    prefers_popular: bool
+    decade: str
+    detailed_mood: str
 
 @dataclass
 class Song:
-    """A song with audio features and metadata for content-based recommendations."""
+    """
+    A song with audio features and metadata for content-based recommendations.
+    
+    Attributes:
+        id: Unique song identifier
+        title: Song title
+        artist: Artist name
+        genre: Primary music genre
+        mood: Emotional mood descriptor
+        energy: Energy level (0.0-1.0)
+        tempo_bpm: Tempo in beats per minute
+        valence: Musical positivity (0.0-1.0)
+        danceability: How suitable for dancing (0.0-1.0)
+        acousticness: Acoustic character (0.0-1.0)
+    """
     id: int
     title: str
     artist: str
@@ -17,7 +57,18 @@ class Song:
 
 @dataclass
 class UserProfile:
-    """User taste preferences for personalized recommendations."""
+    """
+    User taste preferences for personalized recommendations.
+    
+    Attributes:
+        favorite_genre: Primary music genre preference
+        favorite_mood: Preferred emotional mood
+        target_energy: Preferred energy level (0.0-1.0)
+        likes_acoustic: Whether user prefers acoustic songs
+        prefers_popular: Whether user prefers popular songs
+        favorite_decade: Preferred music era
+        favorite_detailed_mood: Specific mood preference
+    """
     favorite_genre: str
     favorite_mood: str
     target_energy: float
@@ -39,8 +90,19 @@ class Recommender:
         """Generate transparent explanation for why a song was recommended."""
         return "Explanation generated based on user profile match."
 
-def load_songs(csv_path: str) -> List[Dict]:
-    """Load song dataset from CSV and parse numeric audio features."""
+def load_songs(csv_path: str) -> List[SongDict]:
+    """
+    Load song dataset from CSV file and parse numeric audio features.
+    
+    Args:
+        csv_path: Path to the CSV file containing song data.
+        
+    Returns:
+        List of song dictionaries with parsed numeric fields.
+        
+    Raises:
+        FileNotFoundError: If the CSV file does not exist.
+    """
     import csv
     songs = []
     with open(csv_path, 'r', encoding='utf-8') as f:
@@ -59,8 +121,21 @@ def load_songs(csv_path: str) -> List[Dict]:
     print(f"Loading songs from {csv_path}...")
     return songs
 
-def score_song(user_prefs: Dict, song: Dict, mode: str = 'balanced') -> Tuple[float, List[str]]:
-    """Score a song based on weighted match with user preferences. Modes adjust genre/energy emphasis."""
+def score_song(user_prefs: UserPreferences, song: SongDict, mode: str = 'balanced') -> Tuple[float, List[str]]:
+    """
+    Score a single song based on weighted match with user preferences.
+    
+    Scoring includes: genre match, mood match, energy similarity, acoustic/popularity/decade/mood bonuses.
+    Modes adjust genre/energy emphasis: 'genre_first' doubles genre weight, 'energy_focus' doubles energy.
+    
+    Args:
+        user_prefs: User preference dictionary with genre, mood, energy, etc.
+        song: Song dictionary to score.
+        mode: Ranking mode - 'balanced' (default), 'genre_first', or 'energy_focus'.
+        
+    Returns:
+        Tuple of (total_score, list_of_explanation_reasons).
+    """
     score = 0.0
     reasons = []
     
@@ -113,8 +188,27 @@ def score_song(user_prefs: Dict, song: Dict, mode: str = 'balanced') -> Tuple[fl
     
     return score, reasons
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5, mode: str = 'balanced') -> List[Tuple[Dict, float, str]]:
-    """Rank all songs and return top k recommendations with diversity penalties to avoid artist repetition."""
+def recommend_songs(
+    user_prefs: UserPreferences, 
+    songs: List[SongDict], 
+    k: int = 5, 
+    mode: str = 'balanced'
+) -> List[Tuple[SongDict, float, str]]:
+    """
+    Rank all songs by preference match and return top k recommendations.
+    
+    Applies diversity penalties to avoid recommending multiple songs by the same artist.
+    Higher scores indicate better matches with user preferences.
+    
+    Args:
+        user_prefs: User preference dictionary.
+        songs: List of song dictionaries to rank.
+        k: Number of top recommendations to return (default: 5).
+        mode: Ranking mode - 'balanced' (default), 'genre_first', or 'energy_focus'.
+        
+    Returns:
+        List of tuples (song, score, explanation) sorted by score descending.
+    """
     scored_songs = []
     for song in songs:
         score, reasons = score_song(user_prefs, song, mode)
