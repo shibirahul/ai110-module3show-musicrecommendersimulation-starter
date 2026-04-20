@@ -2,9 +2,7 @@
 
 ## Project Summary
 
-This project implements a content-based music recommender system called VibeMatcher 1.0 that matches songs to user preferences using weighted scoring. It goes beyond basic requirements by including 8 song attributes (genre, mood, energy, valence, danceability, acousticness, popularity, decade, detailed_mood), diversity penalties to avoid artist repetition, and multiple ranking modes (balanced, genre-first, energy-focus). The system uses a 20-song dataset and provides visual table outputs with detailed scoring explanations.
-
-The recommender demonstrates real-world AI principles by using content-based filtering similar to Spotify's algorithms, with data-driven scoring and evaluation across multiple user profiles.
+VibeMatcher 1.0 is a content-based music recommendation engine that matches songs to user preferences using weighted scoring. It includes 8 song attributes (genre, mood, energy, valence, danceability, acousticness, popularity, decade, detailed_mood), diversity penalties to avoid artist repetition, and multiple ranking modes (balanced, genre-first, energy-focus). The system uses a 20-song dataset and provides visual table outputs with detailed scoring explanations.
 
 ---
 
@@ -69,6 +67,12 @@ Our VibeMatcher 1.0 focuses on content-based filtering with an expanded attribut
    ```bash
    python src/main.py
    ```
+
+### Run the Streamlit app
+
+```bash
+streamlit run src/streamlit_app.py
+```
 
 ### Running Tests
 
