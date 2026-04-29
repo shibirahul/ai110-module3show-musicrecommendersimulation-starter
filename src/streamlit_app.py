@@ -1,35 +1,52 @@
-import os
+"""Streamlit interface for the VibeMatcher applied AI system."""
+
+from __future__ import annotations
+
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from recommender import load_songs, recommend_songs
+from recommender import (
+    configure_logging,
+    load_intent_contexts,
+    load_songs,
+    run_recommendation_workflow,
+)
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+st.set_page_config(page_title="VibeMatcher Applied AI", page_icon="🎵", layout="wide")
 
 
 @st.cache_data
 def get_songs() -> list[dict]:
-    script_dir = Path(__file__).resolve().parent
-    data_path = script_dir.parent / "data" / "songs.csv"
-    return load_songs(str(data_path))
+    return load_songs(str(PROJECT_ROOT / "data" / "songs.csv"))
 
 
-def build_user_prefs() -> dict:
-    genres = sorted({song['genre'] for song in songs})
-    moods = sorted({song['mood'] for song in songs})
-    decades = sorted({song['decade'] for song in songs})
-    detailed_moods = sorted({song['detailed_mood'] for song in songs})
+@st.cache_data
+def get_contexts() -> list:
+    return load_intent_contexts(str(PROJECT_ROOT / "data" / "intent_guides.csv"))
 
-    st.sidebar.header("User Preferences")
-    genre = st.sidebar.selectbox("Preferred genre", genres, index=genres.index("pop") if "pop" in genres else 0)
-    mood = st.sidebar.selectbox("Preferred mood", moods, index=moods.index("happy") if "happy" in moods else 0)
+
+def build_user_prefs(songs: list[dict]) -> dict:
+    genres = sorted({song["genre"] for song in songs})
+    moods = sorted({song["mood"] for song in songs})
+    decades = sorted({song["decade"] for song in songs})
+    detailed_moods = sorted({song["detailed_mood"] for song in songs})
+
+    st.sidebar.header("Preference Controls")
+    genre = st.sidebar.selectbox("Preferred genre", genres, index=_index_or_zero(genres, "pop"))
+    mood = st.sidebar.selectbox("Preferred mood", moods, index=_index_or_zero(moods, "happy"))
     energy = st.sidebar.slider("Preferred energy", 0.0, 1.0, 0.7, 0.01)
     likes_acoustic = st.sidebar.checkbox("Likes acoustic songs", value=False)
     prefers_popular = st.sidebar.checkbox("Prefers popular songs", value=True)
-    decade = st.sidebar.selectbox("Favorite decade", decades, index=decades.index("2010s") if "2010s" in decades else 0)
-    detailed_mood = st.sidebar.selectbox("Preferred detailed mood", detailed_moods, index=detailed_moods.index("upbeat") if "upbeat" in detailed_moods else 0)
-    mode = st.sidebar.selectbox("Ranking mode", ["balanced", "genre_first", "energy_focus"])
-    top_k = st.sidebar.slider("Number of recommendations", 3, 10, 5)
+    decade = st.sidebar.selectbox("Favorite decade", decades, index=_index_or_zero(decades, "2020s"))
+    detailed_mood = st.sidebar.selectbox(
+        "Preferred detailed mood",
+        detailed_moods,
+        index=_index_or_zero(detailed_moods, "upbeat"),
+    )
 
     return {
         "genre": genre,
@@ -39,39 +56,93 @@ def build_user_prefs() -> dict:
         "prefers_popular": prefers_popular,
         "decade": decade,
         "detailed_mood": detailed_mood,
-        "mode": mode,
-        "top_k": top_k,
     }
 
 
-def render_recommendations(user_prefs: dict, songs: list[dict]) -> None:
-    st.subheader("Recommended Songs")
-    recommendations = recommend_songs(user_prefs, songs, k=user_prefs["top_k"], mode=user_prefs["mode"])
+def render_recommendations(result: dict) -> None:
+    confidence = result["confidence"]
+    st.metric("System confidence", f"{confidence:.2f}")
+
+    if result["warnings"]:
+        for warning in result["warnings"]:
+            st.warning(warning)
 
     rows = []
-    for song, score, explanation in recommendations:
-        rows.append({
-            "Title": song["title"],
-            "Artist": song["artist"],
-            "Genre": song["genre"],
-            "Energy": song["energy"],
-            "Score": round(score, 2),
-            "Reasons": explanation,
-        })
+    for song, score, explanation in result["recommendations"]:
+        rows.append(
+            {
+                "Title": song["title"],
+                "Artist": song["artist"],
+                "Genre": song["genre"],
+                "Mood": song["mood"],
+                "Energy": song["energy"],
+                "Score": round(score, 2),
+                "Reasons": explanation,
+            }
+        )
 
-    df = pd.DataFrame(rows)
-    st.table(df)
+    st.subheader("Recommended Songs")
+    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
-    with st.expander("Show raw recommendations data"):
-        st.write(recommendations)
+    st.subheader("AI Workflow Trace")
+    for step in result["plan_steps"]:
+        st.write(f"- {step}")
+
+    st.subheader("Retrieved Listening Guides")
+    context_rows = []
+    for context in result["retrieved_contexts"]:
+        context_rows.append(
+            {
+                "Guide": context.name,
+                "Score": context.score,
+                "Matched Terms": ", ".join(context.matched_terms),
+                "Rationale": context.rationale,
+                "Guardrail": context.guardrail,
+            }
+        )
+    if context_rows:
+        st.dataframe(pd.DataFrame(context_rows), hide_index=True, use_container_width=True)
+    else:
+        st.info("No listening guide was retrieved for this input.")
 
 
-st.title("VibeMatcher 1.0 — Streamlit Music Recommender")
+def _index_or_zero(values: list[str], target: str) -> int:
+    return values.index(target) if target in values else 0
+
+
+configure_logging(str(PROJECT_ROOT / "logs" / "recommender.log"))
+
+st.title("VibeMatcher Applied AI System")
 st.write(
-    "Choose your preferences in the sidebar and the recommender will show the top songs from the dataset. "
-    "Scores are based on genre, mood, energy, popularity, acoustic preference, decade, and detailed mood."
+    "Enter a listening goal, then the system retrieves intent guidance, plans guarded preferences, "
+    "scores the catalog, and reports confidence."
 )
 
 songs = get_songs()
-user_prefs = build_user_prefs()
-render_recommendations(user_prefs, songs)
+contexts = get_contexts()
+
+intent_text = st.text_area(
+    "Listening goal",
+    value="I need quiet focus music for coding homework in the rain.",
+    height=90,
+)
+
+col_a, col_b, col_c = st.columns([1, 1, 1])
+with col_a:
+    mode = st.selectbox("Ranking mode", ["balanced", "genre_first", "energy_focus"])
+with col_b:
+    top_k = st.slider("Number of recommendations", 3, 10, 5)
+with col_c:
+    lock_explicit = st.checkbox("Lock sidebar preferences", value=False)
+
+user_prefs = build_user_prefs(songs)
+result = run_recommendation_workflow(
+    intent_text,
+    songs,
+    user_prefs=user_prefs,
+    contexts=contexts,
+    k=top_k,
+    mode=mode,
+    lock_explicit_preferences=lock_explicit,
+)
+render_recommendations(result)
