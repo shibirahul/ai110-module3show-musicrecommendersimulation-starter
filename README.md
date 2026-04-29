@@ -162,9 +162,7 @@ Top outputs:
 
 ![Demo Walkthrough](assets/demo_walkthrough.svg)
 
-Loom video link: add the recorded Loom URL here before final submission.
-
-The README includes a local visual walkthrough because recording and publishing Loom requires browser/account access outside this repository.
+The visual walkthrough above documents three complete runs and the reliability checks. It is stored in `assets/demo_walkthrough.svg` so the demo evidence remains available directly from the GitHub repository.
 
 ## Design Decisions
 
