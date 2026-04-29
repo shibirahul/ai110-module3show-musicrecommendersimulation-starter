@@ -4,7 +4,9 @@ from src.recommender import (
     Recommender,
     Song,
     UserProfile,
+    compare_response_specialization,
     load_intent_contexts,
+    load_response_styles,
     load_songs,
     plan_preferences,
     retrieve_intent_contexts,
@@ -110,3 +112,20 @@ def test_plan_preferences_clamps_invalid_energy():
 
     assert planned["energy"] == 1.0
     assert any("clamped" in warning for warning in warnings)
+
+
+def test_specialized_response_differs_from_baseline():
+    songs = load_songs(str(PROJECT_ROOT / "data" / "songs.csv"))
+    style = load_response_styles(str(PROJECT_ROOT / "data" / "response_styles.csv"))[0]
+    result = run_recommendation_workflow(
+        "Give me high energy songs for a gym workout.",
+        songs,
+        user_prefs={"genre": "lofi", "mood": "chill", "energy": 0.3},
+    )
+
+    comparison = compare_response_specialization(result, style=style)
+
+    assert "Confidence:" in comparison["specialized"]
+    assert "Evidence:" in comparison["specialized"]
+    assert comparison["evidence_marker_delta"] >= 3
+    assert comparison["word_count_delta"] > 20

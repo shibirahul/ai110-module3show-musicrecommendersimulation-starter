@@ -22,6 +22,7 @@ This is not a large language model and does not call an external AI API. It is a
 - Rule-based planning that converts retrieved context into recommendation preferences.
 - Content-based scoring over `data/songs.csv`.
 - Guardrail and confidence logic.
+- Specialized response formatting using synthetic few-shot examples in `data/response_styles.csv`.
 - Automated reliability evaluation.
 
 ## Data
@@ -49,6 +50,7 @@ Each guide includes keywords, preferred genres, moods, target energy, detailed m
 6. Add context-fit bonuses from retrieved guides.
 7. Apply an artist diversity penalty.
 8. Estimate confidence from top score strength, retrieval quality, and artist diversity.
+9. Generate a constrained evidence-backed response that includes best match, retrieved evidence, confidence, and reliability notes.
 
 ## Strengths
 
@@ -57,6 +59,7 @@ Each guide includes keywords, preferred genres, moods, target energy, detailed m
 - Shows observable intermediate steps instead of hiding the decision process.
 - Handles invalid energy values and unsupported categories safely.
 - Includes repeatable tests and a reliability harness.
+- Demonstrates specialized response behavior and measures how it differs from a baseline answer.
 
 ## Limitations And Biases
 
@@ -91,6 +94,8 @@ The reliability harness runs five predefined cases:
 ```text
 Passed: 5/5
 Average confidence: 0.76
+RAG impact: 3/3 passed; top recommendation changed 3/3
+Specialization comparison: 3/3 passed; average evidence marker delta 7.0
 ```
 
 Covered behaviors:
@@ -108,6 +113,18 @@ What surprised me: the retrieval layer made the system much more useful even wit
 I inspected the CLI outputs for three end-to-end examples: focus coding, workout push, and calm reset. The top recommendations matched the intended listening context and the explanations exposed why each song ranked highly.
 
 Remaining risk: the tests validate a few important behaviors, not every possible query. A larger deployment would need more test prompts, broader human review, and user feedback loops.
+
+## Specialization Behavior
+
+The system includes a lightweight specialization layer instead of fine-tuning a large model. `data/response_styles.csv` stores synthetic few-shot examples and tone rules for an evidence-backed music-advisor response. The response generator uses workflow evidence to produce a constrained answer with:
+
+- best match
+- retrieved guide
+- ranking evidence
+- confidence
+- reliability note
+
+`python src/compare_specialization.py` compares this specialized output to a minimal baseline response. In the current run, all three cases passed, with an average evidence-marker delta of `7.0` and average word-count delta of `78.7`.
 
 ## AI Collaboration Reflection
 

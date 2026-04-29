@@ -79,6 +79,9 @@ def main() -> None:
             for warning in result["warnings"]:
                 print(f"- {warning}")
 
+        print("\nSpecialized response:")
+        print(result["specialized_response"])
+
         print("\nWorkflow:")
         for step in result["plan_steps"]:
             print(f"- {step}")

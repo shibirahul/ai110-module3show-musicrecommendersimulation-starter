@@ -67,6 +67,22 @@ def render_recommendations(result: dict) -> None:
         for warning in result["warnings"]:
             st.warning(warning)
 
+    st.subheader("Specialized AI Response")
+    st.write(result["specialized_response"])
+
+    with st.expander("Compare baseline vs specialized response"):
+        metrics = result["specialization_metrics"]
+        st.write("Baseline response:")
+        st.code(metrics["baseline"], language="text")
+        st.write("Specialized response:")
+        st.code(metrics["specialized"], language="text")
+        st.write(
+            {
+                "evidence_marker_delta": metrics["evidence_marker_delta"],
+                "word_count_delta": metrics["word_count_delta"],
+            }
+        )
+
     rows = []
     for song, score, explanation in result["recommendations"]:
         rows.append(

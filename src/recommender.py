@@ -126,6 +126,18 @@ class IntentContext:
     matched_terms: Tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class ResponseStyle:
+    """Few-shot style record for constrained recommendation responses."""
+
+    id: str
+    label: str
+    tone_rules: str
+    example_input: str
+    baseline_example: str
+    specialized_example: str
+
+
 class Recommender:
     """Dataclass-friendly wrapper around the dictionary recommendation engine."""
 
@@ -231,6 +243,28 @@ def load_intent_contexts(csv_path: str) -> List[IntentContext]:
 
     LOGGER.info("loaded_intent_contexts path=%s count=%s", csv_path, len(contexts))
     return contexts
+
+
+def load_response_styles(csv_path: str) -> List[ResponseStyle]:
+    """Load synthetic few-shot response styles for specialization demos."""
+
+    styles: List[ResponseStyle] = []
+    with open(csv_path, "r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            styles.append(
+                ResponseStyle(
+                    id=row["id"].strip(),
+                    label=row["label"].strip(),
+                    tone_rules=row["tone_rules"].strip(),
+                    example_input=row["example_input"].strip(),
+                    baseline_example=row["baseline_example"].strip(),
+                    specialized_example=row["specialized_example"].strip(),
+                )
+            )
+
+    LOGGER.info("loaded_response_styles path=%s count=%s", csv_path, len(styles))
+    return styles
 
 
 def retrieve_intent_contexts(
@@ -497,7 +531,7 @@ def run_recommendation_workflow(
         recommendations[0][0]["title"] if recommendations else "none",
     )
 
-    return {
+    result: Dict[str, object] = {
         "intent_text": intent_text,
         "mode": safe_mode,
         "top_k": bounded_k,
@@ -507,6 +541,87 @@ def run_recommendation_workflow(
         "confidence": confidence,
         "warnings": warnings,
         "plan_steps": plan_steps,
+    }
+    result["baseline_response"] = generate_baseline_response(result)
+    result["specialized_response"] = generate_specialized_response(result)
+    result["specialization_metrics"] = compare_response_specialization(result)
+    return result
+
+
+def generate_baseline_response(workflow_result: Dict[str, object]) -> str:
+    """Generate a deliberately minimal baseline response for comparison."""
+
+    recommendations = workflow_result["recommendations"]
+    if not recommendations:
+        return "No recommendation available."
+
+    top_song, score, _explanation = recommendations[0]
+    return f"Top recommendation: {top_song['title']} by {top_song['artist']} with score {score:.2f}."
+
+
+def generate_specialized_response(
+    workflow_result: Dict[str, object],
+    style: Optional[ResponseStyle] = None,
+) -> str:
+    """
+    Generate a constrained specialist response from workflow evidence.
+
+    The output follows the few-shot style target used in
+    `data/response_styles.csv`: concise, evidence-backed, and explicit about
+    confidence and guardrails.
+    """
+
+    recommendations = workflow_result["recommendations"]
+    if not recommendations:
+        return "Recommendation brief: no songs were available to rank."
+
+    top_song, score, explanation = recommendations[0]
+    retrieved = workflow_result["retrieved_contexts"]
+    warnings = workflow_result["warnings"]
+    confidence = workflow_result["confidence"]
+
+    style_label = style.label if style else "Evidence-backed music advisor"
+    intent = str(workflow_result.get("intent_text") or "structured preference request")
+    retrieved_name = retrieved[0].name if retrieved else "no retrieved guide"
+    retrieved_score = f"{retrieved[0].score:.2f}" if retrieved else "0.00"
+    warning_text = " ".join(warnings) if warnings else "No guardrail warnings were triggered."
+
+    next_listens = []
+    for index, (song, item_score, _reason) in enumerate(recommendations[1:3], start=2):
+        next_listens.append(f"{index}. {song['title']} by {song['artist']} ({item_score:.2f})")
+    next_listens_text = "; ".join(next_listens) if next_listens else "No backup tracks were requested."
+
+    return (
+        f"Recommendation brief ({style_label}): {intent}\n"
+        f"Best match: {top_song['title']} by {top_song['artist']} ({top_song['genre']}, "
+        f"score {score:.2f}).\n"
+        f"Evidence: retrieved guide '{retrieved_name}' scored {retrieved_score}; ranking reasons were "
+        f"{explanation}.\n"
+        f"Next listens: {next_listens_text}.\n"
+        f"Confidence: {confidence:.2f}.\n"
+        f"Reliability note: {warning_text}"
+    )
+
+
+def compare_response_specialization(
+    workflow_result: Dict[str, object],
+    style: Optional[ResponseStyle] = None,
+) -> Dict[str, object]:
+    """Compare baseline and specialized response behavior with simple metrics."""
+
+    baseline = generate_baseline_response(workflow_result)
+    specialized = generate_specialized_response(workflow_result, style=style)
+    baseline_metrics = _response_metrics(baseline)
+    specialized_metrics = _response_metrics(specialized)
+
+    return {
+        "baseline": baseline,
+        "specialized": specialized,
+        "baseline_metrics": baseline_metrics,
+        "specialized_metrics": specialized_metrics,
+        "evidence_marker_delta": specialized_metrics["evidence_markers"]
+        - baseline_metrics["evidence_markers"],
+        "word_count_delta": specialized_metrics["word_count"] - baseline_metrics["word_count"],
     }
 
 
@@ -640,6 +755,25 @@ def _profile_to_preferences(user: UserProfile) -> UserPreferences:
 
 def _tokenize(text: str) -> List[str]:
     return [token for token in TOKEN_RE.findall(text.lower()) if token not in STOP_WORDS]
+
+
+def _response_metrics(response_text: str) -> Dict[str, int]:
+    tokens = _tokenize(response_text)
+    lower_text = response_text.lower()
+    evidence_terms = (
+        "evidence",
+        "retrieved guide",
+        "ranking reasons",
+        "confidence",
+        "reliability note",
+        "guardrail",
+        "warning",
+    )
+    return {
+        "word_count": len(tokens),
+        "evidence_markers": sum(1 for term in evidence_terms if term in lower_text),
+        "line_count": len([line for line in response_text.splitlines() if line.strip()]),
+    }
 
 
 def _split_pipe_list(value: str) -> List[str]:

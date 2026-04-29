@@ -18,7 +18,7 @@
 
   <rect class="bg" width="1180" height="760" />
   <text x="48" y="54" class="title">VibeMatcher End-to-End Demo Walkthrough</text>
-  <text x="48" y="82" class="text">Each panel shows input, retrieved guidance, planned preferences, confidence, and top recommendations.</text>
+  <text x="48" y="82" class="text">Each panel shows input, retrieved guidance, planned preferences, confidence, top recommendations, and reliability evidence.</text>
 
   <rect x="48" y="122" width="340" height="420" class="panel" />
   <text x="70" y="154" class="h2">1. Focus Coding</text>
@@ -71,6 +71,6 @@
   <rect x="48" y="590" width="1084" height="104" class="eval" />
   <text x="70" y="624" class="h2">Reliability Harness</text>
   <text x="70" y="654" class="text">Command: python src/evaluate_system.py</text>
-  <text x="70" y="678" class="text">Result: 5/5 cases passed, average confidence 0.76</text>
-  <text x="600" y="654" class="small">Covers focus, workout, calm, invalid energy, and unknown-query fallback behavior.</text>
+  <text x="70" y="678" class="text">Result: 5/5 reliability cases passed; RAG and specialization comparisons each passed 3/3</text>
+  <text x="600" y="654" class="small">Covers focus, workout, calm, invalid energy, unknown-query fallback, and specialized evidence responses.</text>
 </svg>

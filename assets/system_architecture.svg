@@ -49,8 +49,9 @@
 
   <rect x="1005" y="130" width="130" height="92" class="eval" />
   <text x="1027" y="162" class="label">Output</text>
-  <text x="1027" y="188" class="text">songs + reasons</text>
-  <text x="1027" y="207" class="small">confidence</text>
+  <text x="1027" y="184" class="text">songs + reasons</text>
+  <text x="1027" y="203" class="small">specialized response</text>
+  <text x="1027" y="220" class="small">confidence</text>
 
   <rect x="775" y="300" width="200" height="90" class="data" />
   <text x="797" y="331" class="label">Song Catalog</text>
@@ -82,6 +83,11 @@
   <text x="647" y="552" class="text">Inspect explanations, warnings,</text>
   <text x="647" y="571" class="small">and demo walkthrough outputs</text>
 
+  <rect x="925" y="495" width="210" height="90" class="box" />
+  <text x="947" y="526" class="label">Response Specializer</text>
+  <text x="947" y="552" class="text">Few-shot style examples</text>
+  <text x="947" y="571" class="small">best match + evidence notes</text>
+
   <path class="line" d="M223 176 H285" />
   <path class="line" d="M470 176 H535" />
   <path class="line" d="M720 176 H785" />
@@ -93,4 +99,5 @@
   <path class="dash" d="M377 390 V495" />
   <path class="dash" d="M720 540 H625" />
   <path class="dash" d="M875 390 V495" />
+  <path class="dash" d="M875 540 H925" />
 </svg>

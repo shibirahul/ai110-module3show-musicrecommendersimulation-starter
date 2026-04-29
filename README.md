@@ -18,6 +18,7 @@ Core AI features:
 - Observable agent-like workflow trace: parse goal, retrieve context, plan preferences, score songs, estimate confidence.
 - Guardrails for invalid inputs, unsupported catalog values, sensitive phrasing, and low confidence.
 - Reliability harness with pass/fail checks and average confidence reporting.
+- Specialized response behavior using synthetic few-shot style examples and baseline comparison metrics.
 
 ## Architecture Overview
 
@@ -31,7 +32,8 @@ Data flow:
 4. Guardrails validate energy, catalog values, booleans, and sensitive phrasing.
 5. The scorer ranks songs from `data/songs.csv` with context-fit bonuses and diversity penalties.
 6. The evaluator estimates confidence and logs the run.
-7. The app returns recommendations, explanations, warnings, and workflow steps.
+7. The response specializer formats an evidence-backed music-advisor answer.
+8. The app returns recommendations, explanations, warnings, workflow steps, confidence, and specialized response text.
 
 ## Setup Instructions
 
@@ -60,6 +62,8 @@ Run tests and reliability evaluation:
 ```bash
 pytest
 python src/evaluate_system.py
+python src/compare_rag_impact.py
+python src/compare_specialization.py
 ```
 
 If `python` or `pytest` is not on your shell PATH, use the virtual environment paths directly:
@@ -67,6 +71,8 @@ If `python` or `pytest` is not on your shell PATH, use the virtual environment p
 ```bash
 .venv/bin/python -m pytest -q
 .venv/bin/python src/evaluate_system.py
+.venv/bin/python src/compare_rag_impact.py
+.venv/bin/python src/compare_specialization.py
 ```
 
 ## Sample Interactions
@@ -85,6 +91,15 @@ Workflow result:
 Retrieved 1 listening guide: Deep Focus Coding
 Planned preferences: genre=lofi, mood=chill, energy=0.48, decade=2020s
 Confidence: 0.83
+```
+
+Specialized response excerpt:
+
+```text
+Best match: Library Rain by Paper Lanterns (lofi, score 5.84).
+Evidence: retrieved guide 'Deep Focus Coding' scored 0.67.
+Confidence: 0.83.
+Reliability note: No guardrail warnings were triggered.
 ```
 
 Top outputs:
@@ -158,6 +173,7 @@ The README includes a local visual walkthrough because recording and publishing 
 - **Context-aware scoring:** Retrieved context changes the final preferences and adds a ranking bonus, so retrieval affects the output rather than appearing as side information.
 - **Transparent explanations:** Every recommendation includes the score reasons used to rank it.
 - **Guardrails over hidden behavior:** Invalid energy values are clamped, unsupported categories are ignored, sensitive phrasing produces a warning, and low-confidence runs are flagged.
+- **Specialized response style:** `data/response_styles.csv` stores synthetic few-shot examples for an evidence-backed music-advisor tone. The generated specialized response must include a best match, retrieved evidence, confidence, and a reliability note.
 
 Trade-off: the system is more reliable and explainable than a black-box model, but it cannot understand language as broadly as a real LLM or embedding model. The custom retrieval set must be expanded for broader coverage.
 
@@ -166,9 +182,11 @@ Trade-off: the system is more reliable and explainable than a black-box model, b
 Automated checks:
 
 ```text
-pytest: 5 passed
+pytest: 6 passed
 evaluation harness: 5/5 passed
 average confidence: 0.76
+RAG impact comparison: 3/3 passed; top recommendation changed 3/3
+specialization comparison: 3/3 passed; average evidence marker delta 7.0
 ```
 
 Evaluation cases covered:
@@ -180,6 +198,25 @@ Evaluation cases covered:
 - Unknown query should still return safe fallback recommendations.
 
 What worked: retrieval improved outputs when a user gave mismatched structured preferences, such as selecting pop/happy but typing a coding-focus goal. What did not work perfectly: unknown or very unusual goals fall back to structured preferences because the local guide set is intentionally small.
+
+RAG impact examples from `python src/compare_rag_impact.py`:
+
+| Case | Baseline Top Song | With RAG Top Song |
+| --- | --- | --- |
+| focus overrides pop defaults | Sunrise City (pop) | Library Rain (lofi) |
+| workout overrides chill defaults | Library Rain (lofi) | Gym Hero (pop) |
+| calm reset overrides intense defaults | Thunder Clap (rock) | Spacewalk Thoughts (ambient) |
+
+Specialization evidence from `python src/compare_specialization.py`: the specialized response adds retrieved evidence, ranking reasons, confidence, and reliability notes. Across three examples, the average evidence-marker delta versus the baseline response was `7.0`.
+
+## Stretch Feature Evidence
+
+| Stretch Feature | Evidence |
+| --- | --- |
+| RAG Enhancement | Custom retrieval guides in `data/intent_guides.csv`; `compare_rag_impact.py` shows output changes in 3/3 cases. |
+| Agentic Workflow Enhancement | `plan_steps` expose parse, retrieval, planning, scoring, and confidence steps in CLI and Streamlit. |
+| Fine-Tuning or Specialization Behavior | Synthetic few-shot styles in `data/response_styles.csv`; `compare_specialization.py` measures baseline-vs-specialized output differences. |
+| Test Harness or Evaluation Script | `src/evaluate_system.py` prints pass/fail and confidence summary for predefined inputs. |
 
 ## Reflection
 
@@ -201,10 +238,14 @@ Short portfolio reflection: This project shows that I can turn a simple prototyp
 - `src/streamlit_app.py` - interactive app.
 - `src/main.py` - CLI demo with three end-to-end runs.
 - `src/evaluate_system.py` - reliability harness.
+- `src/compare_rag_impact.py` - baseline-vs-RAG impact comparison.
+- `src/compare_specialization.py` - baseline-vs-specialized response comparison.
 - `tests/test_recommender.py` - unit and workflow tests.
 - `data/songs.csv` - local song catalog.
 - `data/intent_guides.csv` - custom retrieval knowledge base.
+- `data/response_styles.csv` - synthetic few-shot style examples.
 - `assets/system_architecture.svg` - architecture diagram.
 - `assets/demo_walkthrough.svg` - visual demo transcript.
 - `model_card.md` - responsible AI reflection and model documentation.
 - `presentation_outline.md` - 5-7 minute presentation outline.
+- `rubric_checklist.md` - direct mapping from rubric items to repo evidence.
