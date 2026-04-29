@@ -191,7 +191,7 @@ During AI collaboration, a helpful suggestion was adding an evaluation harness i
 
 ## Portfolio Artifact
 
-GitHub repository: use the public repository URL for this project after pushing.
+GitHub repository: <https://github.com/shibirahul/ai110-module3show-musicrecommendersimulation-starter>
 
 Short portfolio reflection: This project shows that I can turn a simple prototype into a more complete applied AI system with retrieval, modular design, testing, guardrails, documentation, and user-facing explanations.
 
