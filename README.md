@@ -1,328 +1,210 @@
-# 🎵 Music Recommender Simulation
+# VibeMatcher Applied AI System
 
-## Project Summary
+VibeMatcher is an offline applied AI music recommender that turns a plain-language listening goal into explainable song recommendations. It retrieves relevant listening-intent guidance, plans guarded preference settings, reranks a local song catalog, estimates confidence, and logs each run.
 
-VibeMatcher 1.0 is a content-based music recommendation engine that matches songs to user preferences using weighted scoring. It includes 8 song attributes (genre, mood, energy, valence, danceability, acousticness, popularity, decade, detailed_mood), diversity penalties to avoid artist repetition, and multiple ranking modes (balanced, genre-first, energy-focus). The system uses a 20-song dataset and provides visual table outputs with detailed scoring explanations.
+No AI API key is required. The system uses a lightweight local retrieval workflow over `data/intent_guides.csv` instead of downloading or calling a large model. This keeps the project reproducible on a normal laptop while still demonstrating retrieval-augmented decision-making.
 
----
+## Original Project
 
-## How The System Works
+This final project extends my Module 3 project, **Music Recommender Simulation**. The original version was a rule-based content recommender that scored songs using genre, mood, energy, acousticness, popularity, decade, detailed mood, and a diversity penalty. It worked as a small simulation, but users had to manually choose structured preferences and there was no retrieval layer, confidence score, guardrail reporting, or evaluation harness.
 
-Real-world music recommendation systems like Spotify and YouTube combine collaborative filtering (analyzing similar users' behavior) and content-based filtering (matching song attributes to preferences). They use rich data sources: listening history, skips, likes, playlists, explicit ratings, and song features extracted via audio analysis (tempo, mood, energy, genre tags).
+## What The System Does
 
-Our VibeMatcher 1.0 focuses on content-based filtering with an expanded attribute set. It calculates weighted scores based on user preferences, applies diversity penalties, and supports multiple ranking modes for flexibility.
+VibeMatcher 2.0 accepts either structured preferences or a natural-language goal such as "quiet focus music for coding homework." The system retrieves a matching listening guide, uses that retrieved context to plan final preferences, scores the local song catalog, applies context-aware reranking and artist diversity penalties, and returns recommendations with explanations.
 
-**Song Attributes Used:** genre, mood, energy, valence, danceability, acousticness, popularity, decade, detailed_mood
+Core AI features:
 
-**User Preferences:** genre, mood, energy, likes_acoustic, prefers_popular, favorite_decade, favorite_detailed_mood
+- Retrieval-Augmented Generation style workflow using a custom local knowledge base.
+- Observable agent-like workflow trace: parse goal, retrieve context, plan preferences, score songs, estimate confidence.
+- Guardrails for invalid inputs, unsupported catalog values, sensitive phrasing, and low confidence.
+- Reliability harness with pass/fail checks and average confidence reporting.
 
-**Algorithm Recipe (Balanced Mode):**
+## Architecture Overview
 
-- Genre match: +2.0 points
-- Mood match: +1.0 point
-- Energy similarity: 1 - |song_energy - user_energy| (0-1 scale)
-- Acoustic preference: +0.5 if user likes acoustic and song >0.7 acousticness
-- Popularity preference: +0.5 if user prefers popular and song >80 popularity
-- Decade match: +0.5 if matches user's favorite decade
-- Detailed mood match: +0.5 if matches user's favorite detailed mood
-- Diversity penalty: -0.5 for each repeated artist in top recommendations
-- Total score = sum of all applicable bonuses
+![System Architecture](assets/system_architecture.svg)
 
-**Mode Adjustments:**
+Data flow:
 
-- Genre-first: Doubles genre weight (+4.0)
-- Energy-focus: Doubles energy similarity weight (0-2 scale)
+1. User enters a listening goal in Streamlit or the CLI.
+2. The intent retriever searches `data/intent_guides.csv`.
+3. The preference planner combines retrieved guidance with optional user controls.
+4. Guardrails validate energy, catalog values, booleans, and sensitive phrasing.
+5. The scorer ranks songs from `data/songs.csv` with context-fit bonuses and diversity penalties.
+6. The evaluator estimates confidence and logs the run.
+7. The app returns recommendations, explanations, warnings, and workflow steps.
 
-**Data Flow:**
+## Setup Instructions
 
-1. Load 20 songs from CSV with type conversions
-2. For each song, calculate score based on user prefs and mode
-3. Sort by score descending, apply diversity penalties
-4. Return top K recommendations with explanations
+Use Python 3.10 or newer. This workspace has been verified with Python 3.13.7.
 
-**Potential Biases:** May over-prioritize genre in balanced mode; popularity bonuses could favor mainstream songs; diversity penalties help but may reduce optimal matches.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
 
----
+Run the command-line demo:
 
-## Getting Started
+```bash
+python src/main.py
+```
 
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-   ```
-
-2. Install dependencies
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run the app:
-
-   ```bash
-   python src/main.py
-   ```
-
-### Run the Streamlit app
+Run the Streamlit app:
 
 ```bash
 streamlit run src/streamlit_app.py
 ```
 
-### Running Tests
-
-Run the starter tests with:
+Run tests and reliability evaluation:
 
 ```bash
 pytest
+python src/evaluate_system.py
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+If `python` or `pytest` is not on your shell PATH, use the virtual environment paths directly:
 
----
-
-## Experiments You Tried
-
-We tested the system with 3 diverse user profiles across all 3 ranking modes, demonstrating how different weighting affects recommendations.
-
-### High-Energy Pop Fan Profile
-
-Preferences: genre=pop, mood=happy, energy=0.8, prefers_popular=True, decade=2010s, detailed_mood=upbeat
-
-**Balanced Mode Results:**
-
-```
-+-----------------+----------------+---------+---------------------------------------------------------------------------------------------------------------------------+
-| Title           | Artist         |   Score | Reasons                                                                                                                   |
-+=================+================+=========+===========================================================================================================================+
-| Sunrise City    | Neon Echo      |    4.98 | genre match (+2.0), mood match (+1.0), energy similarity (0.98), popularity preference (+0.5), detailed mood match (+0.5) |
-+-----------------+----------------+---------+---------------------------------------------------------------------------------------------------------------------------+
-| Gym Hero        | Max Pulse      |    3.37 | genre match (+2.0), energy similarity (0.87), decade match (+0.5)                                                         |
-+-----------------+----------------+---------+---------------------------------------------------------------------------------------------------------------------------+
-| Rooftop Lights  | Indigo Parade  |    2.96 | mood match (+1.0), energy similarity (0.96), popularity preference (+0.5), decade match (+0.5)                            |
-+-----------------+----------------+---------+---------------------------------------------------------------------------------------------------------------------------+
+```bash
+.venv/bin/python -m pytest -q
+.venv/bin/python src/evaluate_system.py
 ```
 
-**Genre-First Mode:** Prioritizes pop songs like "Sunrise City" and "Gym Hero" with higher scores (6.98, 5.37)
+## Sample Interactions
 
-**Energy-Focus Mode:** Emphasizes energy matching, boosting songs with similar energy levels
+### 1. Focus Coding
 
-### Chill Lofi Listener Profile
+Input:
 
-Preferences: genre=lofi, mood=chill, energy=0.4, likes_acoustic=True, decade=2020s, detailed_mood=relaxed
-
-**Balanced Mode Results:**
-
-```
-+---------------------+----------------+---------+-------------------------------------------------------------------------------------------------------------------------+
-| Title               | Artist         |   Score | Reasons                                                                                                                 |
-+=====================+================+=========+=========================================================================================================================+
-| Midnight Coding     | LoRoom         |    4.98 | genre match (+2.0), mood match (+1.0), energy similarity (0.98), acoustic preference (+0.5), detailed mood match (+0.5) |
-+---------------------+----------------+---------+-------------------------------------------------------------------------------------------------------------------------+
-| Library Rain        | Paper Lanterns |    4.95 | genre match (+2.0), mood match (+1.0), energy similarity (0.95), acoustic preference (+0.5), decade match (+0.5)        |
-+---------------------+----------------+---------+-------------------------------------------------------------------------------------------------------------------------+
-| Focus Flow          | LoRoom         |    3.5  | genre match (+2.0), energy similarity (1.00), acoustic preference (+0.5), decade match (+0.5), diversity penalty (-0.5) |
-+---------------------+----------------+---------+-------------------------------------------------------------------------------------------------------------------------+
+```text
+I need quiet focus music for coding homework in the rain.
 ```
 
-Note the diversity penalty on "Focus Flow" (also by LoRoom) to avoid artist repetition.
+Workflow result:
 
-### Intense Rock Lover Profile
-
-Preferences: genre=rock, mood=intense, energy=0.9, decade=1990s, detailed_mood=aggressive
-
-**Balanced Mode Results:**
-
-```
-+--------------+-------------+---------+------------------------------------------------------------------------------------------------------------------+
-| Title        | Artist      |   Score | Reasons                                                                                                          |
-+==============+=============+=========+==================================================================================================================+
-| Storm Runner | Voltline    |    4.99 | genre match (+2.0), mood match (+1.0), energy similarity (0.99), decade match (+0.5), detailed mood match (+0.5) |
-+--------------+-------------+---------+------------------------------------------------------------------------------------------------------------------+
-| Thunder Clap | Rock Titans |    3.95 | genre match (+2.0), mood match (+1.0), energy similarity (0.95)                                                  |
-+--------------+-------------+---------+------------------------------------------------------------------------------------------------------------------+
+```text
+Retrieved 1 listening guide: Deep Focus Coding
+Planned preferences: genre=lofi, mood=chill, energy=0.48, decade=2020s
+Confidence: 0.83
 ```
 
-**Mode Comparison:** Genre-first mode boosts rock songs; energy-focus mode prioritizes high-energy tracks regardless of genre.
+Top outputs:
 
----
+| Song | Artist | Why |
+| --- | --- | --- |
+| Library Rain | Paper Lanterns | genre match, mood match, acoustic preference, decade match, retrieved context fit |
+| Midnight Coding | LoRoom | genre match, mood match, acoustic preference, retrieved context fit |
+| Focus Flow | LoRoom | genre match, acoustic preference, detailed mood match, diversity penalty |
 
-## Limitations and Risks
+### 2. Workout Push
 
-**Technical Limitations:**
+Input:
 
-- Small dataset (20 songs) limits discovery of diverse matches
-- Simple matching rules miss complex musical relationships
-- No collaborative filtering or user history consideration
+```text
+Give me high energy songs for a gym workout.
+```
 
-**Bias Risks:**
+Workflow result:
 
-- Popularity bonuses may reinforce mainstream music echo chambers
-- Genre over-weighting can limit cross-genre discovery
-- Decade preferences might exclude quality music from other eras
-- Diversity penalties are simplistic and may reduce optimal recommendations
+```text
+Retrieved 3 listening guides: Workout Push, Road Trip, Deep Focus Coding
+Planned preferences: genre=pop, mood=intense, energy=0.87, decade=2020s
+Confidence: 0.76
+```
 
-**Real-world Gaps:**
+Top outputs:
 
-- Lacks user feedback loops for learning
-- No consideration of listening context (time of day, activity)
-- Missing audio features like key, instrumentation details
-- No handling of user mood changes over time
+| Song | Artist | Why |
+| --- | --- | --- |
+| Gym Hero | Max Pulse | genre match, mood match, energy similarity, motivational mood match |
+| Sunrise City | Neon Echo | genre match, popularity preference, decade match |
+| Thunder Clap | Rock Titans | mood match, high energy similarity, workout context fit |
 
-**Ethical Considerations:**
+### 3. Calm Reset
 
-- Could perpetuate cultural biases in music discovery
-- Privacy concerns if expanded to real user data
-- Potential for filter bubbles reducing musical exploration
+Input:
 
----
+```text
+I want soft calm music to relax before sleep.
+```
 
-## Future Improvements
+Workflow result:
 
-- Integrate collaborative filtering with user similarity analysis
-- Add more audio features (key, instrumentation, lyrics sentiment)
-- Implement machine learning models for personalized scoring
-- Add temporal context (time-of-day, weather, activity)
-- Expand dataset and test with real user feedback
-- Add explainability features showing why songs were not recommended
+```text
+Retrieved 2 listening guides: Calm Reset, Deep Focus Coding
+Planned preferences: genre=ambient, mood=chill, energy=0.33, decade=2020s
+Confidence: 0.83
+```
 
----
+Top outputs:
 
-## Model Card
+| Song | Artist | Why |
+| --- | --- | --- |
+| Spacewalk Thoughts | Orbit Bloom | genre match, mood match, acoustic preference, calm context fit |
+| Library Rain | Paper Lanterns | mood match, acoustic preference, decade match |
+| Midnight Coding | LoRoom | mood match, acoustic preference, calm context fit |
 
-See [model_card.md](model_card.md) for detailed model documentation including dataset description, algorithm details, strengths, limitations, evaluation results, and ethical considerations.
+## Demo Walkthrough
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+![Demo Walkthrough](assets/demo_walkthrough.svg)
 
-You will go deeper on this in your model card.
+Loom video link: add the recorded Loom URL here before final submission.
 
----
+The README includes a local visual walkthrough because recording and publishing Loom requires browser/account access outside this repository.
+
+## Design Decisions
+
+- **Offline retrieval instead of an API model:** The project does not need an API key, avoids network failures, and runs quickly in class or portfolio review settings.
+- **Custom knowledge base:** `data/intent_guides.csv` is small but inspectable. Each guide includes keywords, target genres, moods, energy, rationale, and a guardrail.
+- **Context-aware scoring:** Retrieved context changes the final preferences and adds a ranking bonus, so retrieval affects the output rather than appearing as side information.
+- **Transparent explanations:** Every recommendation includes the score reasons used to rank it.
+- **Guardrails over hidden behavior:** Invalid energy values are clamped, unsupported categories are ignored, sensitive phrasing produces a warning, and low-confidence runs are flagged.
+
+Trade-off: the system is more reliable and explainable than a black-box model, but it cannot understand language as broadly as a real LLM or embedding model. The custom retrieval set must be expanded for broader coverage.
+
+## Reliability And Testing Summary
+
+Automated checks:
+
+```text
+pytest: 5 passed
+evaluation harness: 5/5 passed
+average confidence: 0.76
+```
+
+Evaluation cases covered:
+
+- Focus query should retrieve calm study music.
+- Workout query should favor energetic songs.
+- Calm query should favor acoustic low-energy songs.
+- Invalid energy should be clamped and warned.
+- Unknown query should still return safe fallback recommendations.
+
+What worked: retrieval improved outputs when a user gave mismatched structured preferences, such as selecting pop/happy but typing a coding-focus goal. What did not work perfectly: unknown or very unusual goals fall back to structured preferences because the local guide set is intentionally small.
 
 ## Reflection
 
-Read and complete `model_card.md`:
+This project taught me that a useful AI system is more than a ranking formula. Retrieval, validation, logging, confidence, and evaluation make the system easier to trust because users can see how the answer was produced and when the system is uncertain.
 
-[**Model Card**](model_card.md)
+The largest limitation is coverage. A 20-song catalog and six listening guides can demonstrate the architecture, but they cannot represent all cultures, genres, languages, or listening contexts. The system could be misused if someone treated it as emotional or health advice, so it includes safety warnings and frames recommendations as music suggestions only.
 
-Write 1 to 2 paragraphs here about what you learned:
+During AI collaboration, a helpful suggestion was adding an evaluation harness instead of relying only on visual inspection of recommendations. A flawed suggestion was assuming a larger model or API was necessary; for this project, a smaller offline retrieval system was more reproducible and easier to explain.
 
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+## Portfolio Artifact
 
----
+GitHub repository: use the public repository URL for this project after pushing.
 
-## 7. `model_card_template.md`
+Short portfolio reflection: This project shows that I can turn a simple prototype into a more complete applied AI system with retrieval, modular design, testing, guardrails, documentation, and user-facing explanations.
 
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}
+## File Guide
 
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-```
+- `src/recommender.py` - core retrieval, planning, scoring, guardrails, confidence, and logging.
+- `src/streamlit_app.py` - interactive app.
+- `src/main.py` - CLI demo with three end-to-end runs.
+- `src/evaluate_system.py` - reliability harness.
+- `tests/test_recommender.py` - unit and workflow tests.
+- `data/songs.csv` - local song catalog.
+- `data/intent_guides.csv` - custom retrieval knowledge base.
+- `assets/system_architecture.svg` - architecture diagram.
+- `assets/demo_walkthrough.svg` - visual demo transcript.
+- `model_card.md` - responsible AI reflection and model documentation.
+- `presentation_outline.md` - 5-7 minute presentation outline.

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+  <title id="title">VibeMatcher Demo Walkthrough</title>
+  <desc id="desc">Visual transcript of three end-to-end VibeMatcher runs and the reliability summary.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #334155; stroke-width: 2; rx: 8; }
+      .accent { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; rx: 8; }
+      .eval { fill: #f0fdf4; stroke: #15803d; stroke-width: 2; rx: 8; }
+      .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+      .h2 { font: 700 18px Arial, sans-serif; fill: #0f172a; }
+      .label { font: 700 14px Arial, sans-serif; fill: #0f172a; }
+      .text { font: 13px Arial, sans-serif; fill: #334155; }
+      .mono { font: 13px Menlo, Consolas, monospace; fill: #1e293b; }
+      .small { font: 12px Arial, sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1180" height="760" />
+  <text x="48" y="54" class="title">VibeMatcher End-to-End Demo Walkthrough</text>
+  <text x="48" y="82" class="text">Each panel shows input, retrieved guidance, planned preferences, confidence, and top recommendations.</text>
+
+  <rect x="48" y="122" width="340" height="420" class="panel" />
+  <text x="70" y="154" class="h2">1. Focus Coding</text>
+  <text x="70" y="185" class="label">Input</text>
+  <text x="70" y="208" class="mono">quiet focus music for coding homework</text>
+  <text x="70" y="243" class="label">Retrieved</text>
+  <text x="70" y="266" class="text">Deep Focus Coding, score 0.67</text>
+  <text x="70" y="301" class="label">Planned Preferences</text>
+  <text x="70" y="324" class="text">genre=lofi, mood=chill, energy=0.48</text>
+  <text x="70" y="347" class="text">decade=2020s, detailed_mood=concentrated</text>
+  <text x="70" y="382" class="label">Top Recommendations</text>
+  <text x="70" y="405" class="text">1. Library Rain - Paper Lanterns</text>
+  <text x="70" y="428" class="text">2. Midnight Coding - LoRoom</text>
+  <text x="70" y="451" class="text">3. Focus Flow - LoRoom</text>
+  <rect x="70" y="482" width="140" height="36" class="accent" />
+  <text x="88" y="505" class="label">confidence 0.83</text>
+
+  <rect x="420" y="122" width="340" height="420" class="panel" />
+  <text x="442" y="154" class="h2">2. Workout Push</text>
+  <text x="442" y="185" class="label">Input</text>
+  <text x="442" y="208" class="mono">high energy songs for a gym workout</text>
+  <text x="442" y="243" class="label">Retrieved</text>
+  <text x="442" y="266" class="text">Workout Push, Road Trip, Deep Focus Coding</text>
+  <text x="442" y="301" class="label">Planned Preferences</text>
+  <text x="442" y="324" class="text">genre=pop, mood=intense, energy=0.87</text>
+  <text x="442" y="347" class="text">decade=2020s, detailed_mood=motivational</text>
+  <text x="442" y="382" class="label">Top Recommendations</text>
+  <text x="442" y="405" class="text">1. Gym Hero - Max Pulse</text>
+  <text x="442" y="428" class="text">2. Sunrise City - Neon Echo</text>
+  <text x="442" y="451" class="text">3. Thunder Clap - Rock Titans</text>
+  <rect x="442" y="482" width="140" height="36" class="accent" />
+  <text x="460" y="505" class="label">confidence 0.76</text>
+
+  <rect x="792" y="122" width="340" height="420" class="panel" />
+  <text x="814" y="154" class="h2">3. Calm Reset</text>
+  <text x="814" y="185" class="label">Input</text>
+  <text x="814" y="208" class="mono">soft calm music to relax before sleep</text>
+  <text x="814" y="243" class="label">Retrieved</text>
+  <text x="814" y="266" class="text">Calm Reset, Deep Focus Coding</text>
+  <text x="814" y="301" class="label">Planned Preferences</text>
+  <text x="814" y="324" class="text">genre=ambient, mood=chill, energy=0.33</text>
+  <text x="814" y="347" class="text">decade=2020s, detailed_mood=peaceful</text>
+  <text x="814" y="382" class="label">Top Recommendations</text>
+  <text x="814" y="405" class="text">1. Spacewalk Thoughts - Orbit Bloom</text>
+  <text x="814" y="428" class="text">2. Library Rain - Paper Lanterns</text>
+  <text x="814" y="451" class="text">3. Midnight Coding - LoRoom</text>
+  <rect x="814" y="482" width="140" height="36" class="accent" />
+  <text x="832" y="505" class="label">confidence 0.83</text>
+
+  <rect x="48" y="590" width="1084" height="104" class="eval" />
+  <text x="70" y="624" class="h2">Reliability Harness</text>
+  <text x="70" y="654" class="text">Command: python src/evaluate_system.py</text>
+  <text x="70" y="678" class="text">Result: 5/5 cases passed, average confidence 0.76</text>
+  <text x="600" y="654" class="small">Covers focus, workout, calm, invalid energy, and unknown-query fallback behavior.</text>
+</svg>

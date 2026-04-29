@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-labelledby="title desc">
+  <title id="title">VibeMatcher System Architecture</title>
+  <desc id="desc">Architecture diagram showing user input, retrieval, planning, scoring, guardrails, evaluation, output, logs, and tests.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#334155" />
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .box { fill: #ffffff; stroke: #334155; stroke-width: 2; rx: 8; }
+      .data { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; rx: 8; }
+      .guard { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; rx: 8; }
+      .eval { fill: #f0fdf4; stroke: #15803d; stroke-width: 2; rx: 8; }
+      .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+      .label { font: 700 16px Arial, sans-serif; fill: #0f172a; }
+      .text { font: 13px Arial, sans-serif; fill: #334155; }
+      .small { font: 12px Arial, sans-serif; fill: #475569; }
+      .line { stroke: #334155; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 2; stroke-dasharray: 6 6; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1180" height="720" />
+  <text x="48" y="54" class="title">VibeMatcher Applied AI System</text>
+  <text x="48" y="82" class="text">Offline RAG-style recommendation workflow with guardrails, confidence, logs, and evaluation.</text>
+
+  <rect x="48" y="130" width="175" height="92" class="box" />
+  <text x="70" y="162" class="label">User Input</text>
+  <text x="70" y="188" class="text">Streamlit or CLI</text>
+  <text x="70" y="207" class="small">goal + preferences</text>
+
+  <rect x="285" y="120" width="185" height="112" class="data" />
+  <text x="307" y="152" class="label">Intent Retriever</text>
+  <text x="307" y="178" class="text">Searches local guide CSV</text>
+  <text x="307" y="197" class="small">matched terms + score</text>
+  <text x="307" y="216" class="small">data/intent_guides.csv</text>
+
+  <rect x="535" y="120" width="185" height="112" class="guard" />
+  <text x="557" y="152" class="label">Preference Planner</text>
+  <text x="557" y="178" class="text">Merges retrieved context</text>
+  <text x="557" y="197" class="small">with user controls</text>
+  <text x="557" y="216" class="small">applies guardrails</text>
+
+  <rect x="785" y="120" width="180" height="112" class="box" />
+  <text x="807" y="152" class="label">Song Scorer</text>
+  <text x="807" y="178" class="text">Weighted content score</text>
+  <text x="807" y="197" class="small">context bonus</text>
+  <text x="807" y="216" class="small">diversity penalty</text>
+
+  <rect x="1005" y="130" width="130" height="92" class="eval" />
+  <text x="1027" y="162" class="label">Output</text>
+  <text x="1027" y="188" class="text">songs + reasons</text>
+  <text x="1027" y="207" class="small">confidence</text>
+
+  <rect x="775" y="300" width="200" height="90" class="data" />
+  <text x="797" y="331" class="label">Song Catalog</text>
+  <text x="797" y="357" class="text">20 local tracks</text>
+  <text x="797" y="376" class="small">data/songs.csv</text>
+
+  <rect x="535" y="300" width="185" height="90" class="guard" />
+  <text x="557" y="331" class="label">Guardrails</text>
+  <text x="557" y="357" class="text">validate energy, values</text>
+  <text x="557" y="376" class="small">sensitive phrasing warnings</text>
+
+  <rect x="285" y="300" width="185" height="90" class="eval" />
+  <text x="307" y="331" class="label">Evaluator</text>
+  <text x="307" y="357" class="text">confidence estimate</text>
+  <text x="307" y="376" class="small">pass/fail harness</text>
+
+  <rect x="48" y="300" width="175" height="90" class="box" />
+  <text x="70" y="331" class="label">Logs</text>
+  <text x="70" y="357" class="text">workflow runs</text>
+  <text x="70" y="376" class="small">logs/*.log</text>
+
+  <rect x="285" y="495" width="250" height="90" class="eval" />
+  <text x="307" y="526" class="label">Reliability Tests</text>
+  <text x="307" y="552" class="text">pytest + evaluation script</text>
+  <text x="307" y="571" class="small">5/5 evaluation cases pass</text>
+
+  <rect x="625" y="495" width="250" height="90" class="box" />
+  <text x="647" y="526" class="label">Human Review</text>
+  <text x="647" y="552" class="text">Inspect explanations, warnings,</text>
+  <text x="647" y="571" class="small">and demo walkthrough outputs</text>
+
+  <path class="line" d="M223 176 H285" />
+  <path class="line" d="M470 176 H535" />
+  <path class="line" d="M720 176 H785" />
+  <path class="line" d="M965 176 H1005" />
+  <path class="line" d="M875 300 V232" />
+  <path class="line" d="M628 300 V232" />
+  <path class="dash" d="M535 345 H470" />
+  <path class="dash" d="M285 345 H223" />
+  <path class="dash" d="M377 390 V495" />
+  <path class="dash" d="M720 540 H625" />
+  <path class="dash" d="M875 390 V495" />
+</svg>

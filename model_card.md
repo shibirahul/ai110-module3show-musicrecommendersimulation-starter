@@ -1,114 +1,125 @@
-# 🎧 Model Card: Music Recommender Simulation
+# Model Card: VibeMatcher 2.0
 
-## 1. Model Name
+## Model Name
 
-**VibeMatcher 1.0**
+VibeMatcher 2.0 - Offline Retrieval-Augmented Music Recommender
 
----
+## Intended Use
 
-## 2. Intended Use
+VibeMatcher recommends songs from a small local catalog based on a user's listening goal and optional structured preferences. It is intended for education, portfolio demonstration, and lightweight music discovery simulation.
 
-Generates personalized music recommendations based on user preferences for genre, mood, and energy level. Designed for classroom exploration of how recommendation algorithms work, not for real-world production use.
+It should not be used as a production music recommender, a mental health tool, or a system for making claims about a user's identity, personality, health, culture, or background.
 
----
+## Base Project
 
-## 3. How the Model Works
+This project extends my Module 3 **Music Recommender Simulation**. The original project used weighted content-based scoring to recommend songs from a CSV catalog. VibeMatcher 2.0 adds retrieval, guarded preference planning, context-aware reranking, confidence scoring, logging, tests, and an evaluation harness.
 
-The model uses content-based filtering. It scores songs by matching user preferences: +2.0 points for genre match, +1.0 for mood match, and energy similarity (1 - absolute difference in energy levels). Total score determines ranking.
+## System Type
 
----
+This is not a large language model and does not call an external AI API. It is an applied AI workflow made from modular Python components:
 
-## 4. Data
+- Local retrieval over `data/intent_guides.csv`.
+- Rule-based planning that converts retrieved context into recommendation preferences.
+- Content-based scoring over `data/songs.csv`.
+- Guardrail and confidence logic.
+- Automated reliability evaluation.
 
-20 songs from diverse genres (pop, lofi, rock, electronic, folk, reggae, hip hop, world, classical, jazz) and moods (happy, chill, intense, etc.). Energy ranges from 0.28 to 0.95. Dataset expanded from 10 to 20 songs for variety.
+## Data
 
----
+The song catalog contains 20 synthetic or classroom-scale songs with fields for title, artist, genre, mood, energy, tempo, valence, danceability, acousticness, popularity, decade, and detailed mood.
 
-## 5. Strengths
+The retrieval knowledge base contains six listening-intent guides:
 
-Works well for users with specific preferences, providing reasonable matches and clear explanations of why songs were recommended.
+- Deep Focus Coding
+- Workout Push
+- Social Party
+- Calm Reset
+- Nostalgia Trip
+- Road Trip
 
----
+Each guide includes keywords, preferred genres, moods, target energy, detailed moods, decade hints, rationale, and a guardrail note.
 
-## 6. Limitations and Bias
+## How It Works
 
-Over-prioritizes genre matches, potentially creating filter bubbles by favoring songs from the same genre even if mood/energy don't match perfectly. Dataset is small and may not represent all musical tastes, especially niche genres.
+1. Tokenize the user's listening goal.
+2. Retrieve matching intent guides by keyword overlap.
+3. Plan final preferences from retrieved guidance and optional user controls.
+4. Validate inputs with guardrails.
+5. Score every song by genre, mood, energy similarity, acousticness, popularity, decade, and detailed mood.
+6. Add context-fit bonuses from retrieved guides.
+7. Apply an artist diversity penalty.
+8. Estimate confidence from top score strength, retrieval quality, and artist diversity.
 
----
+## Strengths
 
-## 7. Evaluation
+- Runs locally without API keys or model downloads.
+- Produces transparent explanations for every recommendation.
+- Shows observable intermediate steps instead of hiding the decision process.
+- Handles invalid energy values and unsupported categories safely.
+- Includes repeatable tests and a reliability harness.
 
-Tested with three profiles: High-Energy Pop, Chill Lofi, Intense Rock. Results generally matched expectations, with top songs having high scores for matching preferences.
+## Limitations And Biases
 
----
+- The catalog is very small, so recommendations may repeat genres or artists.
+- The retrieval system depends on exact-ish keyword overlap and can miss synonyms.
+- The guide set reflects the designer's assumptions about listening contexts.
+- Popularity scoring can favor mainstream-style songs.
+- English-only keywords limit accessibility.
+- It does not use real listening history, collaborative filtering, lyrics, or audio embeddings.
 
-## 8. Future Work
+Bias may appear when a listening guide maps a context too narrowly, such as assuming focus music should be lofi or calm music should be acoustic. The system reduces some harm by showing the retrieved guide and allowing the user to lock structured preferences, but it does not eliminate representational bias.
 
-Add more features like danceability and acousticness to scoring. Implement diversity penalties to avoid recommending too many songs from the same artist/genre. Explore collaborative filtering.
+## Misuse Risks And Preventations
 
----
+Potential misuse:
 
-## Personal Reflection
+- Treating music suggestions as mental health or productivity advice.
+- Inferring sensitive attributes from music taste.
+- Presenting the small catalog as culturally complete.
 
-Biggest learning: Understanding the difference between scoring individual items and ranking a list. AI tools helped generate code quickly, but I double-checked the math logic. Surprised that simple weighted rules can produce recommendations that feel intuitive. Next, I'd add user feedback loops to refine preferences over time.
+Mitigations:
 
-Where does your system seem to work well
+- Safety warnings for mental-health-related phrasing.
+- Sensitive-attribute warning for protected-trait language.
+- Transparent explanations and confidence scores.
+- Documentation that states the system is a classroom-scale recommender.
 
-Prompts:
+## Evaluation
 
-- User types for which it gives reasonable results
-- Any patterns you think your scoring captures correctly
-- Cases where the recommendations matched your intuition
+The reliability harness runs five predefined cases:
 
----
+```text
+Passed: 5/5
+Average confidence: 0.76
+```
 
-## 6. Limitations and Bias
+Covered behaviors:
 
-Where the system struggles or behaves unfairly.
+- Focus query retrieves calm study music.
+- Workout query favors high-energy songs.
+- Calm query favors acoustic low-energy songs.
+- Invalid energy is clamped and warned.
+- Unknown query returns a safe fallback rather than crashing.
 
-Prompts:
+What surprised me: the retrieval layer made the system much more useful even without a large model. A user can accidentally leave the sidebar on "pop" and "happy," but the text goal "coding focus" still steers the output toward lofi and ambient music.
 
-- Features it does not consider
-- Genres or moods that are underrepresented
-- Cases where the system overfits to one preference
-- Ways the scoring might unintentionally favor some users
+## Human Evaluation
 
----
+I inspected the CLI outputs for three end-to-end examples: focus coding, workout push, and calm reset. The top recommendations matched the intended listening context and the explanations exposed why each song ranked highly.
 
-## 7. Evaluation
+Remaining risk: the tests validate a few important behaviors, not every possible query. A larger deployment would need more test prompts, broader human review, and user feedback loops.
 
-How you checked whether the recommender behaved as expected.
+## AI Collaboration Reflection
 
-Prompts:
+A helpful AI collaboration moment was the suggestion to add a reliability harness with predefined inputs and pass/fail criteria. That made the project stronger than a demo-only recommender because the system now proves basic behavior automatically.
 
-- Which user profiles you tested
-- What you looked for in the recommendations
-- What surprised you
-- Any simple tests or comparisons you ran
+A flawed AI suggestion was to consider using an external model or API for language understanding. That would have added setup friction, cost, and reliability risk. For this assignment, a small offline retrieval system is easier to run, explain, and evaluate.
 
-No need for numeric metrics unless you created some.
+## Future Improvements
 
----
-
-## 8. Future Work
-
-Ideas for how you would improve the model next.
-
-Prompts:
-
-- Additional features or preferences
-- Better ways to explain recommendations
-- Improving diversity among the top results
-- Handling more complex user tastes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about your experience.
-
-Prompts:
-
-- What you learned about recommender systems
-- Something unexpected or interesting you discovered
-- How this changed the way you think about music recommendation apps
+- Expand the song catalog and retrieval guides.
+- Add synonym handling or a small local embedding model if downloads are allowed.
+- Add user feedback controls for "more like this" and "less like this."
+- Track false positives and false negatives from more evaluation prompts.
+- Add fairness checks for genre and decade distribution.
+- Export evaluation results as JSON for easier portfolio reporting.
