@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-labelledby="title desc">
   <title id="title">VibeMatcher Demo Walkthrough</title>
   <desc id="desc">Visual transcript of three end-to-end VibeMatcher runs and the reliability summary.</desc>
   <defs>
@@ -16,7 +16,7 @@
     </style>
   </defs>
 
-  <rect class="bg" width="1180" height="760" />
+  <rect class="bg" width="1180" height="720" />
   <text x="48" y="54" class="title">VibeMatcher End-to-End Demo Walkthrough</text>
   <text x="48" y="82" class="text">Each panel shows input, retrieved guidance, planned preferences, confidence, top recommendations, and reliability evidence.</text>
 
@@ -68,9 +68,11 @@
   <rect x="814" y="482" width="140" height="36" class="accent" />
   <text x="832" y="505" class="label">confidence 0.83</text>
 
-  <rect x="48" y="590" width="1084" height="104" class="eval" />
-  <text x="70" y="624" class="h2">Reliability Harness</text>
-  <text x="70" y="654" class="text">Command: python src/evaluate_system.py</text>
-  <text x="70" y="678" class="text">Result: 5/5 reliability cases passed; RAG and specialization comparisons each passed 3/3</text>
-  <text x="600" y="654" class="small">Covers focus, workout, calm, invalid energy, unknown-query fallback, and specialized evidence responses.</text>
+  <rect x="48" y="548" width="1084" height="82" class="eval" />
+  <text x="70" y="574" class="h2">Reliability Harness</text>
+  <text x="70" y="596" class="text">Command: python src/evaluate_system.py</text>
+  <text x="70" y="618" class="text">Result: reliability 5/5; RAG impact 3/3; specialization 3/3</text>
+  <text x="650" y="574" class="h2">Coverage</text>
+  <text x="650" y="596" class="small">focus, workout, calm, invalid energy</text>
+  <text x="650" y="618" class="small">unknown fallback + specialization checks</text>
 </svg>
